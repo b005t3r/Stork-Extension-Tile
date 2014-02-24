@@ -71,9 +71,9 @@ public class MapNode extends Node {
         _layers.splice(index, 0, layer);
     }
 
-    public function swapLayers(nodeA:MapLayer, nodeB:MapLayer):void {
-        var indexA:int = getLayerIndex(nodeA);
-        var indexB:int = getLayerIndex(nodeB);
+    public function swapLayers(layerA:MapLayer, layerB:MapLayer):void {
+        var indexA:int = getLayerIndex(layerA);
+        var indexB:int = getLayerIndex(layerB);
 
         if (indexA == -1 || indexB == -1) throw new ArgumentError("not added to this MapNode");
 
@@ -99,23 +99,23 @@ public class MapNode extends Node {
         return null;
     }
 
-    public function getLayerByClass(nodeClass:Class):MapLayer {
+    public function getLayerByClass(layerClass:Class):MapLayer {
         var count:int = _layers.length;
         for(var i:int = 0; i < count; ++i)
-            if(_layers[i] is nodeClass)
+            if(_layers[i] is layerClass)
                 return _layers[i];
 
         return null;
     }
 
-    public function getLayersByClass(nodeClass:Class, nodes:Vector.<MapLayer> = null, recursive:Boolean = false):Vector.<MapLayer> {
+    public function getLayersByClass(layerClass:Class, nodes:Vector.<MapLayer> = null, recursive:Boolean = false):Vector.<MapLayer> {
         if(nodes == null) nodes = new <MapLayer>[];
 
         var count:int = _layers.length;
         for(var i:int = 0; i < count; ++i)
             var n:MapLayer = _layers[i];
 
-        if(n is nodeClass)
+        if(n is layerClass)
             nodes[nodes.length] = n;
 
         return nodes;
