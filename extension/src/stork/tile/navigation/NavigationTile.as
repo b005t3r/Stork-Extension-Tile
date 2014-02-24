@@ -13,5 +13,10 @@ public class NavigationTile extends Enum implements ITile {
 
     public static const PASSABLE_TILE:NavigationTile = new NavigationTile();
     public static const OBSTACLE_TILE:NavigationTile = new NavigationTile();
+
+    override public function toString():String {
+        if(this == PASSABLE_TILE)   return ".";
+        else                        return "X";
+    }
 }
 }
