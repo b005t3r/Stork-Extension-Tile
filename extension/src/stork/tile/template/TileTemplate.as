@@ -28,14 +28,10 @@ public class TileTemplate {
         if(resultMatches == null)
             resultMatches = new <TemplateMatch>[];
 
-        for(var x:int = 0; x < pattern.horizontalTileCount - _matchingPattern.horizontalTileCount + 1; x++) {
-            for(var y:int = 0; y < pattern.verticalTileCount - _matchingPattern.verticalTileCount + 1; y++) {
+        for(var x:int = 0; x < pattern.horizontalTileCount - _matchingPattern.horizontalTileCount + 1; x++)
+            for(var y:int = 0; y < pattern.verticalTileCount - _matchingPattern.verticalTileCount + 1; y++)
                 if(matchesAt(pattern, x, y))
                     resultMatches[resultMatches.length] = new TemplateMatch(x, y);
-
-
-            }
-        }
 
         return resultMatches;
     }
@@ -44,14 +40,14 @@ public class TileTemplate {
         for(var ix:int = 0; ix < _matchingPattern.horizontalTileCount; ix++) {
             for(var iy:int = 0; iy < _matchingPattern.verticalTileCount; iy++) {
                 var patternTile:ITile = pattern.getTileAt(x + ix, y + iy);
+
                 var matchingTile:ITile = _matchingPattern.getTileAt(ix, iy);
-
-                if(! TileUtil.matches(patternTile, matchingTile))
-                    return false;
-
                 var notMatchingTile:ITile = _notMatchingPattern != null ? _notMatchingPattern.getTileAt(ix, iy) : null;
 
-                if(notMatchingTile != null && TileUtil.matches(patternTile, notMatchingTile))
+                if(matchingTile != null && ! matchingTile.equals(patternTile))
+                    return false;
+
+                if(notMatchingTile != null && notMatchingTile.equals(patternTile))
                     return false;
             }
         }
