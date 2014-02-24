@@ -12,8 +12,8 @@ public class MapLayer extends TilePattern {
     private var _horizontalOffset:int;
     private var _verticalOffset:int;
 
-    public function MapLayer(name:String, horizontalTileCount:int, verticalTileCount:int, tileWidth:int, tileHeight:int, horizontalOffset:int = 0, verticalOffset:int = 0) {
-        super(horizontalTileCount, verticalTileCount, null);
+    public function MapLayer(name:String, horizontalTileCount:int, verticalTileCount:int, tileWidth:int, tileHeight:int, horizontalOffset:int = 0, verticalOffset:int = 0, initialTile:ITile = null) {
+        super(horizontalTileCount, verticalTileCount, initialTile);
 
         _name               = name;
         _tileWidth          = tileWidth;
