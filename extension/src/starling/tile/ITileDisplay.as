@@ -4,7 +4,11 @@
  * Time: 12:54
  */
 package starling.tile {
+import starling.display.DisplayObject;
 
-public interface ITileDisplay {
+import stork.tile.ITile;
+
+public interface ITileDisplay extends ITile {
+    function createDisplay():DisplayObject
 }
 }
