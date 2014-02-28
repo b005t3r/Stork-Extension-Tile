@@ -108,17 +108,17 @@ public class MapNode extends Node {
         return null;
     }
 
-    public function getLayersByClass(layerClass:Class, nodes:Vector.<MapLayer> = null, recursive:Boolean = false):Vector.<MapLayer> {
-        if(nodes == null) nodes = new <MapLayer>[];
+    public function getLayersByClass(layerClass:Class, layers:Vector.<MapLayer> = null):Vector.<MapLayer> {
+        if(layers == null) layers = new <MapLayer>[];
 
         var count:int = _layers.length;
         for(var i:int = 0; i < count; ++i)
             var n:MapLayer = _layers[i];
 
         if(n is layerClass)
-            nodes[nodes.length] = n;
+            layers[layers.length] = n;
 
-        return nodes;
+        return layers;
     }
 }
 }

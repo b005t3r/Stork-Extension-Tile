@@ -7,7 +7,7 @@ package stork.tile.navigation {
 import stork.tile.MapLayer;
 
 public class NavigationLayer extends MapLayer {
-    public function NavigationLayer(name:String, horizontalTileCount:int, verticalTileCount:int, tileWidth:int, tileHeight:int, horizontalOffset:int = 0, verticalOffset:int = 0) {
+    public function NavigationLayer(name:String, horizontalTileCount:int, verticalTileCount:int, tileWidth:Number, tileHeight:Number, horizontalOffset:Number = 0, verticalOffset:Number = 0) {
         super(name, horizontalTileCount, verticalTileCount, tileWidth, tileHeight, horizontalOffset, verticalOffset);
     }
 }

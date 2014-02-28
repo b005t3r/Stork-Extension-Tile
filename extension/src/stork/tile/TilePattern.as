@@ -27,18 +27,18 @@ public class TilePattern implements ITilePattern {
     public function get horizontalTileCount():int { return _horizontalTileCount; }
     public function get verticalTileCount():int { return _verticalTileCount; }
 
-    public function getTileAt(x:int, y:int):ITile {
-        if(x < 0 || y < 0 || x >= _horizontalTileCount || y >= _verticalTileCount)
-            throw new ArgumentError("x and/or y not in range; x: " + x + ", y: " + y + ", width: " + _horizontalTileCount + ", height: " + _verticalTileCount);
+    public function getTileAt(column:int, row:int):ITile {
+        if(column < 0 || row < 0 || column >= _horizontalTileCount || row >= _verticalTileCount)
+            throw new ArgumentError("x and/or y not in range; x: " + column + ", y: " + row + ", width: " + _horizontalTileCount + ", height: " + _verticalTileCount);
 
-        return _map[y * _horizontalTileCount + x];
+        return _map[row * _horizontalTileCount + column];
     }
 
-    public function setTileAt(tile:ITile, x:int, y:int):void {
-        if(x < 0 || y < 0 || x >= _horizontalTileCount || y >= _verticalTileCount)
-            throw new ArgumentError("x and/or y not in range; x: " + x + ", y: " + y + ", width: " + _horizontalTileCount + ", height: " + _verticalTileCount);
+    public function setTileAt(tile:ITile, column:int, row:int):void {
+        if(column < 0 || row < 0 || column >= _horizontalTileCount || row >= _verticalTileCount)
+            throw new ArgumentError("x and/or y not in range; x: " + column + ", y: " + row + ", width: " + _horizontalTileCount + ", height: " + _verticalTileCount);
 
-        _map[y * _horizontalTileCount + x] = tile;
+        _map[row * _horizontalTileCount + column] = tile;
     }
 
     public function toString():String {

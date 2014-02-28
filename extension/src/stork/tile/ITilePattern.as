@@ -8,7 +8,7 @@ public interface ITilePattern {
     function get horizontalTileCount():int;
     function get verticalTileCount():int;
 
-    function getTileAt(x:int, y:int):ITile;
-    function setTileAt(tile:ITile, x:int, y:int):void;
+    function getTileAt(column:int, row:int):ITile;
+    function setTileAt(tile:ITile, column:int, row:int):void;
 }
 }
