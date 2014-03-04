@@ -125,6 +125,11 @@ public class FrontTopViewLayerSprite extends LayerSprite {
     }
 
     override protected function onDisplayAdded(tile:ITile, displayObject:DisplayObject, column:int, row:int):void {
+        displayObject.x         = column * tileWidth; // y has to be 0
+        displayObject.y         = 0;
+        displayObject.width     = tileWidth;
+        displayObject.height    = tileHeight;
+
         _rows[row].addChild(displayObject);
     }
 }

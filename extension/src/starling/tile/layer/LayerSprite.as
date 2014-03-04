@@ -62,11 +62,6 @@ public class LayerSprite extends Sprite implements ITilePattern {
 
             var displayObject:DisplayObject = tileDisplay.createDisplay();
 
-            displayObject.x         = column * _tileWidth; // y has to be 0
-            displayObject.y         = 0;
-            displayObject.width     = _tileWidth;
-            displayObject.height    = _tileHeight;
-
             onDisplayAdded(tile, displayObject, column, row);
             _displayObjects[row * horizontalTileCount + column] = displayObject;
         }

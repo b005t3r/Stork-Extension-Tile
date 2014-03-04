@@ -19,6 +19,11 @@ public class SimpleLayerSprite extends LayerSprite {
     }
 
     override protected function onDisplayAdded(tile:ITile, displayObject:DisplayObject, column:int, row:int):void {
+        displayObject.x         = column * tileWidth;
+        displayObject.y         = row * tileHeight;
+        displayObject.width     = tileWidth;
+        displayObject.height    = tileHeight;
+
         _tileLayerSprite.addChild(displayObject);
     }
 }
