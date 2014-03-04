@@ -4,91 +4,56 @@
  * Time: 13:37
  */
 package starling.tile.layer {
-import flash.geom.Matrix;
-import flash.geom.Point;
 import flash.geom.Rectangle;
 
 import starling.core.RenderSupport;
 import starling.display.DisplayObject;
 import starling.display.Sprite;
+import starling.events.Event;
 import starling.filters.FragmentFilter;
-import starling.utils.MatrixUtil;
 
 import stork.tile.ITile;
 
 public class FrontTopViewLayerSprite extends LayerSprite {
-    private static var _point:Point     = new Point();
-    private static var _matrix:Matrix   = new Matrix();
     private static var _rect:Rectangle  = new Rectangle();
 
-    private var _rowSprites:Vector.<Sprite>;
+    private var _rows:Vector.<Sprite>;
 
-    private var _renderList:Vector.<DisplayObject> = new <DisplayObject>[];
+    private var _renderList:RenderList = new RenderList();
 
     public function FrontTopViewLayerSprite(horizontalTileCount:int, verticalTileCount:int, tileWidth:Number, tileHeight:Number) {
         super(horizontalTileCount, verticalTileCount, tileWidth, tileHeight);
 
-        _rowSprites = new Vector.<Sprite>(verticalTileCount, true);
+        _rows = new Vector.<Sprite>(verticalTileCount, true);
 
         for(var i:int = 0; i < verticalTileCount; i++) {
             var sprite:TileRowSprite    = new TileRowSprite(this);
             sprite.y                    = i * tileHeight;
 
-            _rowSprites[i] = sprite; // already sorted by Y
+            _rows[i] = sprite; // already sorted by Y
             addChild(sprite);
         }
+
+        addEventListener(Event.ADDED, onChildAdded);
+        addEventListener(Event.REMOVED, onChildRemoved);
     }
 
-    override public function getBounds(targetSpace:DisplayObject, resultRect:Rectangle = null):Rectangle {
-        if(! resultRect)
-            resultRect = new Rectangle();
+    private function onChildRemoved(event:Event):void {
+        var child:DisplayObject = event.target as DisplayObject;
 
-        var minX:Number = Number.MAX_VALUE, maxX:Number = -Number.MAX_VALUE;
-        var minY:Number = Number.MAX_VALUE, maxY:Number = -Number.MAX_VALUE;
-        var actualWidth:Number  = tileWidth * horizontalTileCount;
-        var actualHeight:Number = tileHeight * verticalTileCount;
+        if(child.parent != this || child is TileRowSprite)
+            return;
 
-        // optimization
-        if (targetSpace == this) {
-            minX = 0;
-            minY = 0;
-            maxX = actualWidth;
-            maxY = actualHeight;
-        }
-        else {
-            this.getTransformationMatrix(targetSpace, _matrix);
+        _renderList.remove(child);
+    }
 
-            MatrixUtil.transformCoords(_matrix, 0, 0, _point);
-            minX = minX < _point.x ? minX : _point.x;
-            maxX = maxX > _point.x ? maxX : _point.x;
-            minY = minY < _point.y ? minY : _point.y;
-            maxY = maxY > _point.y ? maxY : _point.y;
+    private function onChildAdded(event:Event):void {
+        var child:DisplayObject = event.target as DisplayObject;
 
-            MatrixUtil.transformCoords(_matrix, 0, actualHeight, _point);
-            minX = minX < _point.x ? minX : _point.x;
-            maxX = maxX > _point.x ? maxX : _point.x;
-            minY = minY < _point.y ? minY : _point.y;
-            maxY = maxY > _point.y ? maxY : _point.y;
+        if(child.parent != this || child is TileRowSprite)
+            return;
 
-            MatrixUtil.transformCoords(_matrix, actualWidth, 0, _point);
-            minX = minX < _point.x ? minX : _point.x;
-            maxX = maxX > _point.x ? maxX : _point.x;
-            minY = minY < _point.y ? minY : _point.y;
-            maxY = maxY > _point.y ? maxY : _point.y;
-
-            MatrixUtil.transformCoords(_matrix, actualWidth, actualHeight, _point);
-            minX = minX < _point.x ? minX : _point.x;
-            maxX = maxX > _point.x ? maxX : _point.x;
-            minY = minY < _point.y ? minY : _point.y;
-            maxY = maxY > _point.y ? maxY : _point.y;
-        }
-
-        resultRect.x = minX;
-        resultRect.y = minY;
-        resultRect.width  = maxX - minX;
-        resultRect.height = maxY - minY;
-
-        return resultRect;
+        _renderList.add(child);
     }
 
     override public function render(support:RenderSupport, parentAlpha:Number):void {
@@ -102,41 +67,30 @@ public class FrontTopViewLayerSprite extends LayerSprite {
             }
         }
 
-        if(isFlattened || _rowSprites.length == this.numChildren) {
+        if(isFlattened || _rows.length == this.numChildren) {
             super.render(support, parentAlpha);
         }
         else {
-            var i:int, child:DisplayObject, childCount:int = this.numChildren;
-
-            var renderListSize:int = 0;
-
-            for(i = 0; i < childCount; ++i) {
-                child = getChildAt(i);
-
-                // we've got these in an already sorted list
-                if(child is TileRowSprite)
-                    continue;
-
-                addToRenderList(child, _renderList, renderListSize++);
-            }
-
             var alpha:Number = parentAlpha * this.alpha;
             var blendMode:String = support.blendMode;
 
-            var j:int, rowCount:int = _rowSprites.length;
+            _renderList.sort();
 
-            var row:DisplayObject = rowCount > 0 ? _rowSprites[0] : null;
-            var other:DisplayObject = _renderList[0];
+            var i:int, j:int, child:DisplayObject;
+            var rowCount:int = _rows.length, listSize:int = _renderList.length;
 
-            _renderList[0] = null;
+            var list:Vector.<DisplayObject> = _renderList.displayObjects;
 
-            for(i = 0, j = 0; i < rowCount || j < renderListSize;) {
+            var row:DisplayObject   = rowCount > 0 ? _rows[0] : null;
+            var other:DisplayObject = listSize > 0 ? list[0] : null;
+
+            for(i = 0, j = 0; i < rowCount || j < listSize;) {
                 if(other == null || (row != null && row.y + tileHeight < other.y)) {
                     child = row;
                     ++i;
 
                     if(i < rowCount)
-                        row = _rowSprites[i];
+                        row = _rows[i];
                     else
                         row = null;
                 }
@@ -144,13 +98,10 @@ public class FrontTopViewLayerSprite extends LayerSprite {
                     child = other;
                     ++j;
 
-                    if(j < renderListSize) {
-                        other = _renderList[j];
-                        _renderList[j] = null;
-                    }
-                    else {
+                    if(j < listSize)
+                        other = list[j];
+                    else
                         other = null;
-                    }
                 }
 
                 if(child.hasVisibleArea) {
@@ -160,7 +111,7 @@ public class FrontTopViewLayerSprite extends LayerSprite {
                     support.transformMatrix(child);
                     support.blendMode = child.blendMode;
 
-                    if(filter) filter.render(child, support, alpha);
+                    if(filter)  filter.render(child, support, alpha);
                     else        child.render(support, alpha);
 
                     support.blendMode = blendMode;
@@ -174,39 +125,7 @@ public class FrontTopViewLayerSprite extends LayerSprite {
     }
 
     override protected function onDisplayAdded(tile:ITile, displayObject:DisplayObject, column:int, row:int):void {
-        _rowSprites[row].addChild(displayObject);
-    }
-
-    private function addToRenderList(child:DisplayObject, list:Vector.<DisplayObject>, listSize:int):void {
-        if(listSize == list.length)
-            list.length = listSize * 2 + 10;
-
-        if(listSize == 0) {
-            list[0] = child;
-            return;
-        }
-
-        var left:int = 0, right:int = listSize;
-        var middle:int = (left + right) / 2, middleChild:DisplayObject;
-
-        while(middle > left) {
-            middleChild = list[middle];
-
-            if(child.y > middleChild.y) left = middle;
-            else                        right = middle;
-
-            middle = (left + right) / 2;
-        }
-
-        middleChild = list[middle];
-
-        if(child.y > middleChild.y)
-            ++middle;
-
-        for(right = listSize; right > middle; --right)
-            list[right] = list[int(right - 1)];
-
-        list[middle] = child;
+        _rows[row].addChild(displayObject);
     }
 }
 }
@@ -301,10 +220,94 @@ class TileRowSprite extends Sprite {
         if(_needsValidation) {
             _needsValidation = false;
 
+            unflatten();
+
             if(numChildren == 0)    visible = false;
             else                    flatten();
         }
 
         super.render(support, parentAlpha);
+    }
+}
+
+class RenderList {
+    private var _listA:Vector.<DisplayObject> = new <DisplayObject>[];
+    private var _listB:Vector.<DisplayObject> = new <DisplayObject>[];
+    private var _size:int;
+
+    public function get displayObjects():Vector.<DisplayObject> { return _listA; }
+    public function get length():int { return _size; }
+
+    public function add(o:DisplayObject):void {
+        if(_size == _listA.length) {
+            var newSize:int = _size * 2 + 10;
+
+            _listA.length = newSize;
+            _listB.length = newSize;
+        }
+
+        _listA[_size++] = o;
+    }
+
+    public function remove(o:DisplayObject):void {
+        var index:int = _listA.indexOf(o);
+
+        if(index < 0) return;
+
+        for(; index < _size - 1; ++index)
+            _listA[index] = _listA[int(index + 1)];
+
+        _listA[_size] = null;
+        _listB[_size] = null;
+        --_size;
+    }
+
+    public function sort():void {
+        var tmp:Vector.<DisplayObject> = _listA;
+        _listA = _listB;
+        _listB = tmp;
+
+        for(var i:int = 0; i < _size; ++i) {
+            var o:DisplayObject = _listB[i];
+
+            addSorted(o, _listA, i);
+        }
+    }
+
+    private function addSorted(o:DisplayObject, list:Vector.<DisplayObject>, listSize:int):void {
+        if(listSize == 0) {
+            list[0] = o;
+            return;
+        }
+
+        var left:int, right:int, middle:int;
+
+        // optimization for adding elements in the right order
+        if(o.y >= list[int(listSize - 1)].y) {
+            list[listSize] = o;
+        }
+        else {
+            left = 0; right = listSize; middle = (left + right) / 2;
+            var middleChild:DisplayObject;
+
+            while(middle > left) {
+                middleChild = list[middle];
+
+                if(o.y > middleChild.y) left = middle;
+                else                    right = middle;
+
+                middle = (left + right) / 2;
+            }
+
+            middleChild = list[middle];
+
+            if(o.y > middleChild.y)
+                ++middle;
+
+            for(right = listSize; right > middle; --right)
+                list[right] = list[int(right - 1)];
+
+            list[middle] = o;
+        }
     }
 }
