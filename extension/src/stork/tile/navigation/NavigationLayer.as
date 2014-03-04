@@ -4,6 +4,9 @@
  * Time: 12:49
  */
 package stork.tile.navigation {
+import medkit.collection.HashSet;
+import medkit.collection.TreeSet;
+
 import stork.tile.MapLayer;
 
 public class NavigationLayer extends MapLayer {
@@ -11,11 +14,11 @@ public class NavigationLayer extends MapLayer {
         return Math.abs(startNode.column - destinationNode.column) * commonCost + Math.abs(startNode.row + destinationNode.row) * commonCost;
     }
 
-    public static function euclidianTravelCost(node:NavigationNode, destinationNode:NavigationNode, cost:Number = 1.0, commonDiagonalCost:Number = 1.0):Number {
+    public static function euclidianTravelCost(node:NavigationNode, destinationNode:NavigationNode, commonCost:Number = 1.0, commonDiagonalCost:Number = 1.0):Number {
         var dx:Number = node.column - destinationNode.column;
         var dy:Number = node.row - destinationNode.row;
 
-        return Math.sqrt(dx * dx + dy * dy) * cost;
+        return Math.sqrt(dx * dx + dy * dy) * commonCost;
     }
 
     public static function diagonalTravelCost(node:NavigationNode, destinationNode:NavigationNode, commonCost:Number = 1.0, commonDiagonalCost:Number = 1.0):Number {
@@ -110,88 +113,106 @@ public class NavigationLayer extends MapLayer {
     public function get connectedNodesFunction():Function { return _connectedNodesFunction; }
     public function set connectedNodesFunction(value:Function):void { _connectedNodesFunction = value; }
 
-    public function findPath(startX:int, startY:int, endX:int, endY:int, result:Vector.<NavigationNode> = null):Vector.<NavigationNode> {
+    public function findPath(startX:int, startY:int, endX:int, endY:int, maxIterations:int = int.MAX_VALUE, path:NavigationPath = null):NavigationPath {
+        if(path == null)            path = new NavigationPath();
+        else if(path.length > 0)    path.reset();
+
+        var startNode:NavigationNode = new NavigationNode(startX, startY, 0);
+
+        path.length = 1;
+        path.nodes[0] = startNode;
+
+        continueSearch(endX, endY, path, maxIterations);
+
+        return path;
+    }
+
+    public function continueSearch(endX:int, endY:int, path:NavigationPath, maxIterations:int = int.MAX_VALUE):Boolean {
+        if(path.length == 0)
+            throw new ArgumentError("path must contain at least one node");
+
+        // this path is already complete
+        if(path.complete)
+            return false;
+
+        var startNode:NavigationNode = path.nodes[path.length - 1];
+        path.length -= 1;
+
         var destinationNode:NavigationNode = new NavigationNode(endX, endY);
 
-        var currentNode:NavigationNode = new NavigationNode(startX, startY, 0);
         var connectedNodes:Vector.<NavigationNode> = new Vector.<NavigationNode>(4, true);
 
         var oneMinusAlpha:Number = 1.0 - _alpha;
-        var commonDivider:Number = _alpha >= oneMinusAlpha ? _alpha : oneMinusAlpha;
 
-        var openNodes:Vector.<NavigationNode> = new <NavigationNode>[currentNode];
-        var closedNodes:Vector.<NavigationNode> = new <NavigationNode>[];
+        var openNodes:TreeSet = path.openNodes;
+        var closedNodes:HashSet = path.closedNodes;
+
+        // let's assume we can find the path on one go
+        path.complete = true;
+
+        openNodes.add(startNode);
+
+        var currentNode:NavigationNode = startNode;
 
         while(currentNode.column != endX || currentNode.row != endY) {
-            if(openNodes[0] == null)
-                return null;
+            if(openNodes.size() == 0 || maxIterations == 0) {
+                path.complete = false; // path still incomplete
+                break;
+            }
 
-            currentNode         = openNodes[openNodes.length - 1];
-            openNodes.length   -= 1;
+            currentNode = openNodes.pollFirst();
 
             _connectedNodesFunction(currentNode, this, connectedNodes);
 
             var connectedCount:int = connectedNodes.length;
             for(var i:int = 0; i < connectedCount; ++i) {
                 var testNode:NavigationNode = connectedNodes[i];
-
-                if(testNode == null || testNode == currentNode /*|| testNode.travesable == false*/)
-                    continue;
-
                 connectedNodes[i] = null;
 
-                var costFromStart:Number        = currentNode.currentCost + testNode.travelCost;
+                if(testNode == null || testNode == currentNode || closedNodes.contains(testNode))
+                    continue;
+
+                var costFromStart:Number        = currentNode.currentCostFromStart + testNode.travelCost;
                 var estimatedCostToEnd:Number   = _heuristicCostFunction(testNode, destinationNode, _commonTravelCost, _commonDiagonalTravelCost);
-                var estimatedTotalCost:Number   = (_alpha * costFromStart + oneMinusAlpha * estimatedCostToEnd) / commonDivider;
+                var estimatedTotalCost:Number   = _alpha * costFromStart + oneMinusAlpha * estimatedCostToEnd;
 
-                testNode.currentCost        = costFromStart;
-                testNode.estimatedTotalCost = estimatedTotalCost;
-                testNode.parent             = currentNode;
+                testNode.currentCostFromStart   = costFromStart;
+                testNode.estimatedCostToEnd     = estimatedCostToEnd;
+                testNode.estimatedTotalCost     = estimatedTotalCost;
+                testNode.parent                 = currentNode;
 
-                // TODO: change openNodes to TreeSet and closedNodes to HashSet
-                if(! contains(testNode, openNodes) && ! contains(testNode, closedNodes))
-                    openNodes[openNodes.length] = testNode;
+                if(openNodes.contains(testNode))
+                    continue;
+
+                openNodes.add(testNode);
             }
 
-            closedNodes[closedNodes.length] = currentNode;
-
-            openNodes.sort(function(nodeA:NavigationNode, nodeB:NavigationNode):Number {
-                return nodeB.estimatedTotalCost - nodeA.estimatedTotalCost
-            });
+            closedNodes.add(currentNode);
+            --maxIterations;
         }
 
-        if(result == null)
-            result = new <NavigationNode>[];
-
-        var count:int = 0;
+        var beginIndex:int = 0, count:int = 0, nodes:Vector.<NavigationNode> = path.nodes;
         while(currentNode != null) {
-            result[count++] = currentNode;
-            currentNode = currentNode.parent;
+            nodes[beginIndex + count++] = currentNode;
+            currentNode                 = currentNode.parent;
         }
 
         // reverse result
-        for(var left:int = 0, right:int = count - 1; left < right; ++left, --right) {
-            var tmp:NavigationNode  = result[left];
-            result[left]            = result[right];
-            result[right]           = tmp;
+        for(var left:int = beginIndex, right:int = beginIndex + count - 1; left < right; ++left, --right) {
+            var tmp:NavigationNode  = nodes[left];
+            nodes[left]             = nodes[right];
+            nodes[right]            = tmp;
         }
 
-        return result;
-    }
+        path.length = count;
 
-    private function contains(node:NavigationNode, nodes:Vector.<NavigationNode>):Boolean {
-        var count:int = nodes.length;
-        for(var i:int = 0; i < count; i++) {
-            var n:NavigationNode = nodes[i];
+        // if there still a need and a chance to complete this path, return true; false otherwise
+        var retVal:Boolean = ! path.complete && openNodes.size() > 0;
 
-            if(n == null)
-                continue;
+        openNodes.clear();
+        //closedNodes.clear();
 
-            if(n.column == node.column && n.row == node.row)
-                return true;
-        }
-
-        return false;
+        return retVal;
     }
 }
 }
