@@ -17,7 +17,7 @@ import stork.tile.ITile;
 import stork.tile.ITilePattern;
 import stork.tile.TilePattern;
 
-public class LayerSprite extends Sprite implements ITilePattern {
+public class MapLayerSprite extends Sprite implements ITilePattern {
     private static var _point:Point     = new Point();
     private static var _matrix:Matrix   = new Matrix();
 
@@ -26,7 +26,7 @@ public class LayerSprite extends Sprite implements ITilePattern {
     private var _tiles:TilePattern;
     private var _displayObjects:Vector.<DisplayObject>;
 
-    public function LayerSprite(horizontalTileCount:int, verticalTileCount:int, tileWidth:Number, tileHeight:Number) {
+    public function MapLayerSprite(horizontalTileCount:int, verticalTileCount:int, tileWidth:Number, tileHeight:Number) {
         _tileWidth  = tileWidth;
         _tileHeight = tileHeight;
 
