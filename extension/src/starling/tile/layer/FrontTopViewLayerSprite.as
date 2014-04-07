@@ -14,7 +14,7 @@ import starling.filters.FragmentFilter;
 
 import stork.tile.ITile;
 
-public class FrontTopViewLayerSprite extends LayerSprite {
+public class FrontTopViewLayerSprite extends MapLayerSprite {
     private static var _rect:Rectangle  = new Rectangle();
 
     private var _rows:Vector.<Sprite>;

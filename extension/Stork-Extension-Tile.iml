@@ -17,6 +17,9 @@
             <entry module-name="Starling" build-configuration-name="Starling">
               <dependency linkage="Merged" />
             </entry>
+            <entry module-name="Stork-Extension-Tween" build-configuration-name="Stork-Extension-Tween">
+              <dependency linkage="Merged" />
+            </entry>
           </entries>
           <sdk name="AIR SDK 4.0" />
         </dependencies>
@@ -39,6 +42,7 @@
     <orderEntry type="module" module-name="Stork-Plugin-Starling" exported="" />
     <orderEntry type="module" module-name="Starling" exported="" />
     <orderEntry type="module" module-name="MedKit" exported="" />
+    <orderEntry type="module" module-name="Stork-Extension-Tween" exported="" />
   </component>
 </module>
 

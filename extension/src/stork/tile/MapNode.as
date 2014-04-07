@@ -9,7 +9,8 @@ import stork.core.Node;
 public class MapNode extends Node {
     private var _layers:Vector.<MapLayer> = new <MapLayer>[];
 
-    public function MapNode() {
+    public function MapNode(name:String = "MapNode") {
+        super(name);
     }
 
     public function get layerCount():int { return _layers.length; }

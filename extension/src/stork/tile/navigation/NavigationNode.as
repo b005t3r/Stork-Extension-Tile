@@ -8,7 +8,7 @@ import medkit.object.Comparable;
 import medkit.object.Equalable;
 import medkit.object.Hashable;
 
-public class NavigationNode implements Equalable, Comparable, Hashable{
+public class NavigationNode implements Equalable, Comparable, Hashable {
     /** How much it currently costs to get from start to this node. */
     public var currentCostFromStart:Number = 0.0;
 

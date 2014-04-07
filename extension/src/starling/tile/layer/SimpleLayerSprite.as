@@ -8,7 +8,7 @@ import starling.display.DisplayObject;
 
 import stork.tile.ITile;
 
-public class SimpleLayerSprite extends LayerSprite {
+public class SimpleLayerSprite extends MapLayerSprite {
     private var _tileLayerSprite:TileLayerSprite;
 
     public function SimpleLayerSprite(horizontalTileCount:int, verticalTileCount:int, tileWidth:Number, tileHeight:Number) {

@@ -34,12 +34,17 @@ public class NavigationLayer extends MapLayer {
     public static function nonDiagonalConnectedNodes(node:NavigationNode, navigationLayer:NavigationLayer, result:Vector.<NavigationNode>):void {
         var c:int, r:int, cost:Number, adjacentTile:INavigationTile, currentTile:INavigationTile = navigationLayer.getTileAt(node.column, node.row) as INavigationTile;
 
+        if(currentTile == null) {
+            result[0] = result[1] = result[2] = result[3] = null;
+            return;
+        }
+
         // left
         c = node.column - 1; r = node.row;
 
         if(c >= 0) {
             adjacentTile = navigationLayer.getTileAt(c, r) as INavigationTile;
-            cost = currentTile.leaveCost(-1, 0) + adjacentTile.enterCost(1, 0);
+            cost = adjacentTile != null ? currentTile.leaveCost(-1, 0) + adjacentTile.enterCost(1, 0) : Infinity;
 
             result[0] = isFinite(cost) ? new NavigationNode(c, r, cost) : null;
         }
@@ -52,7 +57,7 @@ public class NavigationLayer extends MapLayer {
 
         if(c < navigationLayer.horizontalTileCount) {
             adjacentTile = navigationLayer.getTileAt(c, r) as INavigationTile;
-            cost = currentTile.leaveCost(1, 0) + adjacentTile.enterCost(-1, 0);
+            cost = adjacentTile != null ? currentTile.leaveCost(1, 0) + adjacentTile.enterCost(-1, 0) : Infinity;
 
             result[1] = isFinite(cost) ? new NavigationNode(c, r, cost) : null;
         }
@@ -65,7 +70,7 @@ public class NavigationLayer extends MapLayer {
 
         if(r >= 0) {
             adjacentTile = navigationLayer.getTileAt(c, r) as INavigationTile;
-            cost = currentTile.leaveCost(0, -1) + adjacentTile.enterCost(0, 1);
+            cost = adjacentTile != null ? currentTile.leaveCost(0, -1) + adjacentTile.enterCost(0, 1) : Infinity;
 
             result[2] = isFinite(cost) ? new NavigationNode(c, r, cost) : null;
         }
@@ -78,7 +83,7 @@ public class NavigationLayer extends MapLayer {
 
         if(r >= 0) {
             adjacentTile = navigationLayer.getTileAt(c, r) as INavigationTile;
-            cost = currentTile.leaveCost(0, 1) + adjacentTile.enterCost(0, -1);
+            cost = adjacentTile != null ? currentTile.leaveCost(0, 1) + adjacentTile.enterCost(0, -1) : Infinity;
 
             result[3] = isFinite(cost) ? new NavigationNode(c, r, cost) : null;
         }
@@ -115,12 +120,12 @@ public class NavigationLayer extends MapLayer {
 
     public function findPath(startX:int, startY:int, endX:int, endY:int, maxIterations:int = int.MAX_VALUE, path:NavigationPath = null):NavigationPath {
         if(path == null)            path = new NavigationPath();
-        else if(path.length > 0)    path.reset();
+        else if(path._length > 0)    path.reset();
 
         var startNode:NavigationNode = new NavigationNode(startX, startY, 0);
 
-        path.length = 1;
-        path.nodes[0] = startNode;
+        path._length = 1;
+        path._nodes[0] = startNode;
 
         continueSearch(endX, endY, path, maxIterations);
 
@@ -128,15 +133,15 @@ public class NavigationLayer extends MapLayer {
     }
 
     public function continueSearch(endX:int, endY:int, path:NavigationPath, maxIterations:int = int.MAX_VALUE):Boolean {
-        if(path.length == 0)
+        if(path._length == 0)
             throw new ArgumentError("path must contain at least one node");
 
         // this path is already complete
         if(path.complete)
             return false;
 
-        var startNode:NavigationNode = path.nodes[path.length - 1];
-        path.length -= 1;
+        var startNode:NavigationNode = path._nodes[path._length - 1];
+        path._length -= 1;
 
         var destinationNode:NavigationNode = new NavigationNode(endX, endY);
 
@@ -144,11 +149,14 @@ public class NavigationLayer extends MapLayer {
 
         var oneMinusAlpha:Number = 1.0 - _alpha;
 
-        var openNodes:TreeSet = path.openNodes;
-        var closedNodes:HashSet = path.closedNodes;
+        var openNodes:TreeSet = path._openNodes;
+        var closedNodes:HashSet = path._closedNodes;
+
+        openNodes.clear(); // reset open nodes - continuing the search is the same as starting a new search really
+        //closedNodes.clear(); // don't reset closed nodes, so we won't be going back and forth each call
 
         // let's assume we can find the path on one go
-        path.complete = true;
+        path._complete = true;
 
         openNodes.add(startNode);
 
@@ -156,7 +164,7 @@ public class NavigationLayer extends MapLayer {
 
         while(currentNode.column != endX || currentNode.row != endY) {
             if(openNodes.size() == 0 || maxIterations == 0) {
-                path.complete = false; // path still incomplete
+                path._complete = false; // path still incomplete
                 break;
             }
 
@@ -191,29 +199,26 @@ public class NavigationLayer extends MapLayer {
             --maxIterations;
         }
 
-        var beginIndex:int = 0, count:int = 0, nodes:Vector.<NavigationNode> = path.nodes;
+        var count:int = 0, nodes:Vector.<NavigationNode> = path._nodes;
         while(currentNode != null) {
-            nodes[beginIndex + count++] = currentNode;
-            currentNode                 = currentNode.parent;
+            if(count == path._nodes.length)
+                path.ensureCapacity(count + 1);
+
+            nodes[count++]  = currentNode;
+            currentNode     = currentNode.parent;
         }
 
         // reverse result
-        for(var left:int = beginIndex, right:int = beginIndex + count - 1; left < right; ++left, --right) {
+        for(var left:int = 0, right:int = count - 1; left < right; ++left, --right) {
             var tmp:NavigationNode  = nodes[left];
             nodes[left]             = nodes[right];
             nodes[right]            = tmp;
         }
 
-        path.length = count;
+        path._length = count;
 
-        // if there still a need and a chance to complete this path, return true; false otherwise
-        var retVal:Boolean = ! path.complete && openNodes.size() > 0;
-
-        openNodes.clear();
-        //closedNodes.clear();
-
-        return retVal;
+        // if there still is a chance and need to complete this path, return true; false otherwise
+        return ! path.complete && openNodes.size() > 0;
     }
 }
 }
-
