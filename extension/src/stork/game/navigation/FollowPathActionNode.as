@@ -8,8 +8,6 @@ import flash.geom.Point;
 
 import medkit.geom.GeomUtil;
 
-import medkit.geom.GeomUtil;
-
 import stork.game.GameActionNode;
 import stork.tile.Entity;
 import stork.tile.navigation.NavigationLayer;
@@ -25,7 +23,6 @@ public class FollowPathActionNode extends GameActionNode {
     private var _entity:Entity;
     private var _speed:Number; // pixels per second
 
-    private var _nextSegmentIndex:int = 0;
     private var _tileWidth:Number;
     private var _tileHeight:Number;
 
@@ -41,16 +38,19 @@ public class FollowPathActionNode extends GameActionNode {
         _tileHeight = _layer.tileHeight;
     }
 
+    public function get path():NavigationPath { return _path; }
+    public function get layer():NavigationLayer { return _layer; }
+    public function get entity():Entity { return _entity; }
+    public function get speed():Number { return _speed; }
+
     override protected function actionStarted():void {
         _entity.x = _path[0].column * _tileWidth + _tileWidth / 2;
         _entity.y = _path[0].row * _tileHeight + _tileHeight / 2;
     }
 
-    override protected function stepStarted():void { ++_nextSegmentIndex; }
-
     override protected function actionUpdated(dt:Number):void {
-        var prevNode:NavigationNode = _path[_nextSegmentIndex - 1];
-        var nextNode:NavigationNode = _path[_nextSegmentIndex];
+        var prevNode:NavigationNode = _path[currentStep];
+        var nextNode:NavigationNode = _path[currentStep + 1];
 
         var startX:Number   = prevNode.column * _tileWidth + _tileWidth / 2,    startY:Number = prevNode.row * _tileHeight + _tileHeight / 2;
         var endX:Number     = nextNode.column * _tileWidth + _tileWidth/ 2,     endY:Number   = nextNode.row * _tileHeight + _tileHeight / 2;
@@ -79,7 +79,7 @@ public class FollowPathActionNode extends GameActionNode {
             _entity.x = endX;
             _entity.y = endY;
 
-            if(_path.length > _nextSegmentIndex + 1)
+            if(_path.length > currentStep)
                 finishStep(timeNeeded);
             else
                 finishAction();
