@@ -63,6 +63,8 @@ public class MapNode extends Node {
 
     public function getLayerIndex(layer:MapLayer):int { return _layers.indexOf(layer); }
     public function setLayerIndex(layer:MapLayer, index:int):void {
+        if(layer == null) throw new ArgumentError("layer cannot be null");
+
         var oldIndex:int = getLayerIndex(layer);
 
         if (oldIndex == index) return;
