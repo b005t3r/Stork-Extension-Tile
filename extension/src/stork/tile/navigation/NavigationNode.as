@@ -4,6 +4,8 @@
  * Time: 13:43
  */
 package stork.tile.navigation {
+import flash.utils.getQualifiedClassName;
+
 import medkit.object.Comparable;
 import medkit.object.Equalable;
 import medkit.object.Hashable;
@@ -76,6 +78,10 @@ public class NavigationNode implements Equalable, Comparable, Hashable {
         //return column + row * 31;
         //return column >= row ? column * column + column + row : column + row * row; // column & row >= 0
         return ((column << 16) | row);
+    }
+
+    public function toString():String {
+        return "[" + getQualifiedClassName(this).split("::").pop() + " column=\"" + column + "\" row=" + row + "]";
     }
 }
 }
